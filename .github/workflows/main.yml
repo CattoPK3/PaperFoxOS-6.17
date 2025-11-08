@@ -1,0 +1,40 @@
+name: Build PaperFox x86_64 Kernel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-x86_64:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential flex bison libncurses5-dev bc
+
+    - name: Configure kernel
+      run: |
+        make mrproper
+        make defconfig   # Replace with your custom .config if you have one
+
+    - name: Build kernel
+      run: make -j$(nproc)
+
+    - name: Package kernel
+      run: |
+        mkdir -p output
+        cp arch/x86/boot/bzImage output/
+        tar czf paperfox-kernel-x86_64.tar.gz -C output bzImage
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: paperfox-kernel-x86_64
+        path: paperfox-kernel-x86_64.tar.gz
