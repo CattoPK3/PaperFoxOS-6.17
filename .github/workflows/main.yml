@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install build dependencies
       run: |
@@ -34,7 +34,7 @@ jobs:
         tar czf paperfox-kernel-x86_64.tar.gz -C output bzImage
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: paperfox-kernel-x86_64
         path: paperfox-kernel-x86_64.tar.gz
