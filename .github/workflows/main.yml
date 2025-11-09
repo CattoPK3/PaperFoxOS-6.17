@@ -1,4 +1,4 @@
-name: Build PaperFox x86_64 Kernel
+name: Build PaperFox Kernel (x86_64 + AArch64)
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-x86_64:
+    name: Build x86_64 Kernel
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +23,7 @@ jobs:
     - name: Configure kernel
       run: |
         make mrproper
-        make defconfig   # Replace with your custom .config if you have one
+        make defconfig
 
     - name: Build kernel
       run: make -j$(nproc)
@@ -38,3 +39,40 @@ jobs:
       with:
         name: paperfox-kernel-x86_64
         path: paperfox-kernel-x86_64.tar.gz
+
+
+  build-aarch64:
+    name: Build AArch64 Kernel
+    runs-on: ubuntu-latest
+    needs: build-x86_64   # waits until x86_64 build is done
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libssl-dev libelf-dev bc flex bison libncurses-dev build-essential \
+          crossbuild-essential-arm64 qemu-user-static
+
+    - name: Configure kernel
+      run: |
+        make mrproper
+        make ARCH=arm64 defconfig
+
+    - name: Build kernel
+      run: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc)
+
+    - name: Package kernel
+      run: |
+        mkdir -p output
+        cp arch/arm64/boot/Image output/
+        tar czf paperfox-kernel-aarch64.tar.gz -C output Image
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: paperfox-kernel-aarch64
+        path: paperfox-kernel-aarch64.tar.gz
